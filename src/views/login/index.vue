@@ -111,6 +111,7 @@ export default {
       try {
         const { data } = await login(this.user);
         this.$toast.success("登录成功");
+        this.$router.back()
         //把数值存入store
         this.$store.commit("setUser", data.data);
       } catch (err) {
