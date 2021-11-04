@@ -3,14 +3,22 @@
     <!-- 我的频道 -->
     <van-cell :border="false">
       <div class="title" slot="title">我的频道</div>
-      <van-button @click="edit = !edit" size="mini" round type="danger" plain
-        >{{edit?"编辑":"完成"}}</van-button
-      >
+      <van-button @click="edit = !edit" size="mini" round type="danger" plain>{{
+        edit ? "完成" : "编辑"
+      }}</van-button>
     </van-cell>
     <!-- 宫格 -->
     <van-grid :gutter="10" :border="false" class="my-grid">
-      <van-grid-item v-for="(item, index) in myChannel" :key="item.id">
-        <van-icon slot="icon" @click="subChanned(item)" v-show="edit" name="close"></van-icon>
+      <van-grid-item
+        v-for="(item, index) in myChannel"
+        :key="item.id"
+        @click="controlCha(item, index)"
+      >
+        <van-icon
+          slot="icon"
+          v-show="edit && !fiexChannels.includes(item.id)"
+          name="close"
+        ></van-icon>
         <span slot="text" class="text" :class="{ active: index == active }">
           {{ item.name }}</span
         >
@@ -35,13 +43,16 @@
 </template>
 
 <script>
-import { getAllChannels } from "@/api/chinne";
+import { getAllChannels, setUserChannerls, deleteChannerl } from "@/api/chinne";
+import { mapState } from "vuex";
+import { setItem, getItem } from "@/utils/storage";
 export default {
   name: "ChannelEdit",
   data() {
     return {
       allChannel: [],
       edit: false,
+      fiexChannels: [0],
     };
   },
   components: {},
@@ -63,10 +74,12 @@ export default {
         });
       });
     },
+    ...mapState(["user"]),
   },
   watch: {},
   created() {
     this.allChannels();
+    // this.myChannel = getItem("myChannel");
   },
   mounted() {},
   methods: {
@@ -74,18 +87,63 @@ export default {
       try {
         var { data } = await getAllChannels();
         this.allChannel = data.data.channels;
-        this.$toast("获取频道列表成功");
       } catch (err) {
         this.$toast("获取频道列表失败");
       }
     },
-    addCommend(commend) {
+    async addCommend(commend) {
       this.myChannel.push(commend);
+      if (this.user) {
+        //用户登录动态存储频道列表到账号
+        console.log("用户登录了");
+        try {
+          await setUserChannerls({
+            id: commend.id,
+            seq: this.myChannel.length,
+          });
+          console.log("请求用户数据成功");
+        } catch (err) {
+          console.log("请求用户数据失败");
+          console.log(err);
+        }
+      } else {
+        console.log("用户没有登录");
+        // 用户没有登录把频道列表存储在本地储存
+        setItem("MY_CHANNEL", this.myChannel);
+      }
     },
-    subChanned(item){
-        this.allChannel.push(item)
-        
-    }
+    controlCha(item, index) {
+      if (this.edit) {
+        //编辑状态---删除频道
+        if (this.fiexChannels.includes(index)) {
+          return;
+        }
+        if (index < this.active) {
+          this.$emit("jumpChannel", this.active - 1);
+        }
+        this.myChannel.splice(index, 1);
+
+        //删除用户频道
+        this.delChannel(item);
+      } else {
+        //完成状态---跳转频道
+        this.$emit("jumpChannel", index, false);
+      }
+    },
+    //删除频道
+    async delChannel(item) {
+      try {
+        if (this.user) {
+          //用户登录 --调用删除接口
+          await deleteChannerl(item.id);
+        } else {
+          //用户没有登录 -- 删除本地储存
+          setItem("MY_CHANNEL", this.myChannel);
+        }
+      } catch (err) {
+        this.$toast("删除频道失败，请稍重试");
+      }
+    },
   },
 };
 </script>

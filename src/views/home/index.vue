@@ -9,6 +9,7 @@
         size="small"
         round
         icon="search"
+        to="/search"
         >搜索</van-button
       >
     </van-nav-bar>
@@ -33,44 +34,48 @@
     <!-- /滑动导航 -->
 
     <!-- 频道列表 -->
-     <!-- 弹出层 -->
-        <van-popup
-          v-model="isShow"
-          closeable
-          position="bottom"
-          close-icon-position = "top-left"
-          :style="{ height: '100%' }"
-        >
-        <!-- 频道内部组件 -->
-        <channel-edit 
+    <!-- 弹出层 -->
+    <van-popup
+      v-model="isShow"
+      closeable
+      position="bottom"
+      close-icon-position="top-left"
+      :style="{ height: '100%' }"
+    >
+      <!-- 频道内部组件 -->
+      <channel-edit
         :my-channel="userchannel"
-        :active = "active"
-        >
-        </channel-edit>
-        </van-popup>
-
+        :active="active"
+        @jumpChannel="onUpdataActive"
+      >
+      </channel-edit>
+    </van-popup>
   </div>
 </template>
 
 <script>
 import { getUserChannel } from "@/api/user";
-import ChannelEdit from "@/components/channel-edit"
+import ChannelEdit from "@/components/channel-edit";
 import ArticleList from "./components/article-list";
+import { mapState } from "vuex";
+import { setItem, getItem } from "@/utils/storage";
 export default {
   name: "HomeIndex",
   components: {
     ArticleList,
-    ChannelEdit
+    ChannelEdit,
   },
   props: {},
   data() {
     return {
       active: 0,
       userchannel: [],
-      isShow: false
+      isShow: false,
     };
   },
-  computed: {},
+  computed: {
+    ...mapState(["user"]),
+  },
   watch: {},
   created() {
     this.loadChannel();
@@ -79,13 +84,37 @@ export default {
   methods: {
     //获取用户频道
     async loadChannel() {
+      // try {
+      //   var { data } = await getUserChannel();
+      //   this.userchannel = data.data.channels;
+      // } catch (err) {
+      //   console.log("获取用户频道失败");
+      // }
+      var userchannel = [];
       try {
-        var { data } = await getUserChannel();
-        this.userchannel = data.data.channels;
-        console.log(data);
+        if (this.user) {
+          //用户已登录，加载服务器中的数据
+          var { data } = await getUserChannel();
+          userchannel = data.data.channels;
+        } else {
+          //用户没有登录，加载本地存储数据
+          var localChannel = getItem("MY_CHANNEL");
+          if (localChannel) {
+            userchannel = localChannel;
+          } else {
+            //如果本地存储没有数据， 就加载默认数据
+            var { data } = await getUserChannel();
+            userchannel = data.data.channels;
+          }
+        }
+        //加载数据
+        this.userchannel = userchannel;
       } catch (err) {
-        console.log("获取用户频道失败");
+        this.$toast("获取用户频道失败");
       }
+    },
+    onUpdataActive(index, isShow = true) {
+      (this.active = index), (this.isShow = isShow);
     },
   },
 };
