@@ -26,27 +26,48 @@
       </van-tab>
 
       <div slot="nav-right" class="placeholder"></div>
-      <div slot="nav-right" class="hamburger-btn">
+      <div slot="nav-right" class="hamburger-btn" @click="isShow = true">
         <i class="iconfont icon-gengduo"></i>
       </div>
     </van-tabs>
     <!-- /滑动导航 -->
+
+    <!-- 频道列表 -->
+     <!-- 弹出层 -->
+        <van-popup
+          v-model="isShow"
+          closeable
+          position="bottom"
+          close-icon-position = "top-left"
+          :style="{ height: '100%' }"
+        >
+        <!-- 频道内部组件 -->
+        <channel-edit 
+        :my-channel="userchannel"
+        :active = "active"
+        >
+        </channel-edit>
+        </van-popup>
+
   </div>
 </template>
 
 <script>
 import { getUserChannel } from "@/api/user";
+import ChannelEdit from "@/components/channel-edit"
 import ArticleList from "./components/article-list";
 export default {
   name: "HomeIndex",
   components: {
     ArticleList,
+    ChannelEdit
   },
   props: {},
   data() {
     return {
       active: 0,
-      userchannel: {},
+      userchannel: [],
+      isShow: false
     };
   },
   computed: {},
