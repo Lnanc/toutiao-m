@@ -1,6 +1,13 @@
 <template>
   <van-cell-group class="aritle-item">
-    <van-cell>
+    <van-cell
+      :to="{
+        name: 'article',
+        params: {
+          articleID: article.art_id,
+        },
+      }"
+    >
       <!-- 标题内容 -->
       <div slot="title" class="title van-multi-ellipsis--l2">
         {{ article.title }}
@@ -81,7 +88,7 @@ export default {
     .cover-item {
       flex: 1;
       height: 146px;
-    //   margin: 30px 0;
+      //   margin: 30px 0;
       &:not(:last-child) {
         margin-right: 4px;
       }
@@ -92,11 +99,11 @@ export default {
     }
   }
   .label-info-wrap {
-      span {
-          margin-right: 26px;
-          color: #b4b4b4;
-          font-size: 23px;
-      }
+    span {
+      margin-right: 26px;
+      color: #b4b4b4;
+      font-size: 23px;
+    }
   }
 }
 </style>

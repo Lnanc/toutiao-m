@@ -16,6 +16,12 @@ const routes = [
         component: () => import("@/views/search")
     },
     {
+        path: '/article/:articleID',
+        name: 'article',
+        component: () => import("@/views/article"),
+        props: true
+    },
+    {
         path: '/',
         name: 'layout',
         component: () => import("@/views/layout"),
